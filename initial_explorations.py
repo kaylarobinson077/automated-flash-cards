@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 
 url_little_women = 'http://www.gutenberg.org/files/514/514-h/514-h.htm'
 url_war_and_peace = 'http://www.gutenberg.org/files/2600/2600-h/2600-h.htm'
-
+url_bible = 'http://www.gutenberg.org/files/10/10-h/10-h.htm'
+url_wizard_of_oz = 'http://www.gutenberg.org/files/55/55-h/55-h.htm'
+url_les_mis = 'http://www.gutenberg.org/files/135/135-h/135-h.htm'
 
 
 def sentiment_main(url, title, chapter_breaks = False, rolling_window = False):
@@ -77,3 +79,6 @@ def sentiment_plot(df_sentiment, title, chapter_breaks, rolling_window):
 # let's run it!
 sentiment_main(url_little_women, "Little Women")
 sentiment_main(url_war_and_peace, "War and Peace")
+sentiment_main(url_bible, "The Bible")
+sentiment_main(url_wizard_of_oz, "The Wizard of Oz")
+sentiment_main(url_les_mis, "Les Miserables")
