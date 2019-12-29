@@ -39,11 +39,11 @@ def preprocess_text(url):
     return tokenized_text
 
 def sentiment_analysis(tokenized_text):
-    sia = SIA()
+    sia     = SIA()
     results = []
     
     for line in tokenized_text:
-        pol_score = sia.polarity_scores(line)
+        pol_score             = sia.polarity_scores(line)
         pol_score['sentence'] = line
         results.append(pol_score)
     df_sentiment = pd.DataFrame.from_records(results)
@@ -52,32 +52,55 @@ def sentiment_analysis(tokenized_text):
 
 
 def label_chapters(df_sentiment):
-    chapter_breaks = df_sentiment[df_sentiment['sentence'].str.contains("CHAPTER")].index
-    df_chapter_boundaries = pd.DataFrame(columns=['ch_start', 'ch_end'])
-    df_chapter_boundaries['ch_start'] = chapter_breaks
+    # make df with page ranges per chapter
+    chapter_breaks                        = df_sentiment[df_sentiment['sentence'].str.contains("CHAPTER")].index
+    df_chapter_boundaries                 = pd.DataFrame(columns=['ch_start', 'ch_end'])
+    df_chapter_boundaries['ch_start']     = chapter_breaks
     df_chapter_boundaries['ch_end'][0:-1] = chapter_breaks[1:]-1
-    df_chapter_boundaries['ch_end'][-1:] = df_sentiment.shape[0]
+    df_chapter_boundaries['ch_end'][-1:]  = df_sentiment.shape[0]
     
+    # get rid of one-page chapters, because these are most likely the table of contents
+    for index, row in df_chapter_boundaries.iterrows():
+        ch_start = row['ch_start']
+        ch_end   = row['ch_end']
+        
+        if ch_end - ch_start < 2:
+            df_chapter_boundaries.drop(index, inplace = True)
+    df_chapter_boundaries.reset_index(inplace = True)
+            
+    print(df_chapter_boundaries.head())
+    
+    # add column to df_sentiment for chapter number
+    df_sentiment['chapter'] = np.nan
+    df_sentiment['chapter_frac'] = np.nan # will be x ticks in plot
+    for index, row in df_chapter_boundaries.iterrows():
+        ch_start = row['ch_start']
+        ch_end   = row['ch_end']
+        df_sentiment['chapter'][ch_start:ch_end+1] = index + 1 # python starts counting at zero
+        
+        n_sentences = df_sentiment[ch_start:ch_end+1].shape[0]
+        df_sentiment['chapter_frac'][ch_start:ch_end+1] = np.linspace(0, 1, n_sentences)
+    
+    return df_sentiment
     
 
 def sentiment_plot(df_sentiment, title, window):
-    #if window == 'chapter':
-        
-            
+
     if window == False:
         rolling_window = int(df_sentiment.shape[0] / 20)
         
-    if window != 'chapter':
-        df_sentiment["rolling_pos"] = df_sentiment["pos"].rolling(rolling_window).mean()
-        df_sentiment["rolling_neg"] = df_sentiment["neg"].rolling(rolling_window).mean()
-        #df_sentiment["rolling_neu"] = df_sentiment["neu"].rolling(rolling_window).mean()
+    if window == 'chapter':
+        df_sentiment = label_chapters(df_sentiment) # add column with chapters
+        rolling_window = int(df_sentiment.shape[0] / df_sentiment['chapter'].max())
         
+    df_sentiment["rolling_pos"] = df_sentiment["pos"].rolling(rolling_window).mean()
+    df_sentiment["rolling_neg"] = df_sentiment["neg"].rolling(rolling_window).mean()
+        
+    if window != 'chapter':
+
         x = np.linspace(1,df_sentiment.shape[0], df_sentiment.shape[0])
-        #y = df["rolling"]
         ax = plt.plot(x, df_sentiment["rolling_pos"], '-', color='green', lw=0.8, label = 'Positive')
         ax = plt.plot(x, df_sentiment["rolling_neg"], '-', color='red', lw=0.8, label = 'Negative')
-        #plt.plot(x, df["rolling_neu"], '-', color='blue', lw=0.8)
-        #plt.plot(x, df["rolling_pos"]-df["rolling_neg"], '-', color='black', lw=0.8)
         plt.xlabel('Sentence Number')
         plt.ylabel('Fraction')
         plt.title(title)
@@ -85,6 +108,18 @@ def sentiment_plot(df_sentiment, title, window):
         
     if window == 'chapter':
         
+        fig, ax = plt.subplots(figsize=(10,8))
+        classes = list(df_sentiment.chapter.dropna().unique())
+        
+        #colors = plt.cm.cool(np.linspace(0,1,max(classes)))
+        for c in classes:
+            #print(c)
+            #print(int(c))
+            df2 = df_sentiment.loc[df_sentiment['chapter'] == c]
+            df2.plot(x='chapter_frac', y='rolling_pos', ax=ax, label=c)
+            #df2.plot(x='chapter_frac', y='rolling_pos', ax=ax, label=c, color=colors[int(c)] )
+        
+        ax.get_legend().remove()
         
     return ax
 
