@@ -7,13 +7,17 @@ from nltk.tokenize import sent_tokenize
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-url_little_women = 'http://www.gutenberg.org/files/514/514-h/514-h.htm'
-url_war_and_peace = 'http://www.gutenberg.org/files/2600/2600-h/2600-h.htm'
-url_bible = 'http://www.gutenberg.org/files/10/10-h/10-h.htm'
-url_wizard_of_oz = 'http://www.gutenberg.org/files/55/55-h/55-h.htm'
-url_les_mis = 'http://www.gutenberg.org/files/135/135-h/135-h.htm'
+url_little_women        = 'http://www.gutenberg.org/files/514/514-h/514-h.htm'
+url_war_and_peace       = 'http://www.gutenberg.org/files/2600/2600-h/2600-h.htm'
+url_bible               = 'http://www.gutenberg.org/files/10/10-h/10-h.htm'
+url_wizard_of_oz        = 'http://www.gutenberg.org/files/55/55-h/55-h.htm'
+url_les_mis             = 'http://www.gutenberg.org/files/135/135-h/135-h.htm'
 url_alice_in_wonderland = 'http://www.gutenberg.org/files/11/11-h/11-h.htm'
+url_tom_sawyer          = 'http://www.gutenberg.org/files/74/74-h/74-h.htm'
+url_peter_pan           = 'http://www.gutenberg.org/files/16/16-h/16-h.htm'
+
 
 def sentiment_main(url, title, window = False):
     
@@ -67,8 +71,6 @@ def label_chapters(df_sentiment):
         if ch_end - ch_start < 2:
             df_chapter_boundaries.drop(index, inplace = True)
     df_chapter_boundaries.reset_index(inplace = True)
-            
-    print(df_chapter_boundaries.head())
     
     # add column to df_sentiment for chapter number
     df_sentiment['chapter'] = np.nan
@@ -77,7 +79,6 @@ def label_chapters(df_sentiment):
         ch_start = row['ch_start']
         ch_end   = row['ch_end']
         df_sentiment['chapter'][ch_start:ch_end+1] = index + 1 # python starts counting at zero
-        
         n_sentences = df_sentiment[ch_start:ch_end+1].shape[0]
         df_sentiment['chapter_frac'][ch_start:ch_end+1] = np.linspace(0, 1, n_sentences)
     
@@ -108,27 +109,31 @@ def sentiment_plot(df_sentiment, title, window):
         
     if window == 'chapter':
         
-        fig, ax = plt.subplots(figsize=(10,8))
-        classes = list(df_sentiment.chapter.dropna().unique())
-        
-        #colors = plt.cm.cool(np.linspace(0,1,max(classes)))
-        for c in classes:
-            #print(c)
-            #print(int(c))
-            df2 = df_sentiment.loc[df_sentiment['chapter'] == c]
-            df2.plot(x='chapter_frac', y='rolling_pos', ax=ax, label=c)
-            #df2.plot(x='chapter_frac', y='rolling_pos', ax=ax, label=c, color=colors[int(c)] )
-        
-        ax.get_legend().remove()
-        
+        ax = sns.lineplot(x="chapter_frac", y="rolling_pos", hue="chapter",
+                   units="chapter", estimator=None, lw=1,
+                   data=df_sentiment, legend='brief')
+        ax.set(xlabel='Fraction of Chapter', ylabel='Positive Fraction', title = title)
+        # i had to play around with bbox vals, look into a way to automate
+        ax.legend(bbox_to_anchor=(1.25, 0.5), loc='center right')
+    
     return ax
 
 
 
 # let's run it!
+    
+# basic plots
 sentiment_main(url_little_women, "Little Women")
 sentiment_main(url_war_and_peace, "War and Peace")
 sentiment_main(url_bible, "The Bible")
-sentiment_main(url_wizard_of_oz, "The Wizard of Oz")
+sentiment_main(url_wizard_of_oz, "The Wizard of Oz") # chapters no clear delineator - revisit?
 sentiment_main(url_les_mis, "Les Miserables")
 sentiment_main(url_alice_in_wonderland, "Alice in Wonderland")
+sentiment_main(url_tom_sawyer, "Tom Sawyer")
+sentiment_main(url_peter_pan, "Peter Pan")
+
+# plot per chapter
+
+sentiment_main(url_tom_sawyer, "Tom Sawyer", window = 'chapter')
+sentiment_main(url_alice_in_wonderland, "Alice in Wonderland", window = 'chapter')
+sentiment_main(url_peter_pan, "Peter Pan", window = 'chapter')
