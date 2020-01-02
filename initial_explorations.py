@@ -57,7 +57,8 @@ def sentiment_analysis(tokenized_text):
 
 def label_chapters(df_sentiment):
     # make df with page ranges per chapter
-    chapter_breaks                        = df_sentiment[df_sentiment['sentence'].str.contains("CHAPTER")].index
+    # future work - use bolding / font style to differentiate chapter breaks?
+    chapter_breaks                        = df_sentiment[df_sentiment['sentence'].str.contains("CHAPTER|Chapter")].index
     df_chapter_boundaries                 = pd.DataFrame(columns=['ch_start', 'ch_end'])
     df_chapter_boundaries['ch_start']     = chapter_breaks
     df_chapter_boundaries['ch_end'][0:-1] = chapter_breaks[1:]-1
@@ -80,8 +81,25 @@ def label_chapters(df_sentiment):
         ch_end   = row['ch_end']
         df_sentiment['chapter'][ch_start:ch_end+1] = index + 1 # python starts counting at zero
         n_sentences = df_sentiment[ch_start:ch_end+1].shape[0]
-        df_sentiment['chapter_frac'][ch_start:ch_end+1] = np.linspace(0, 1, n_sentences)
+        df_sentiment['chapter_frac'][ch_start:ch_end+1] = np.linspace(0, 1, n_sentences)    
     
+    # also make sentiment, relative to chapter start
+    # initialize as nan
+    df_sentiment['pos_relative'] = np.nan
+    df_sentiment['neg_relative'] = np.nan
+    df_sentiment['rolling_pos_relative'] = np.nan
+    df_sentiment['rolling_neg_relative'] = np.nan
+    
+    for index, row in df_sentiment.iterrows():
+        chapter = row['chapter'] - 1
+        
+        if chapter == chapter: # check if nan, i.e. table of contents
+            ch_first_sentence = df_chapter_boundaries['ch_start'][chapter]
+            df_sentiment['pos_relative'][index]         = row['pos'] - df_sentiment['pos'][ch_first_sentence]
+            df_sentiment['neg_relative'][index]         = row['neg'] - df_sentiment['neg'][ch_first_sentence]
+            df_sentiment['rolling_pos_relative'][index] = row['rolling_pos'] - df_sentiment['rolling_pos'][ch_first_sentence]
+            df_sentiment['rolling_neg_relative'][index] = row['rolling_neg'] - df_sentiment['rolling_neg'][ch_first_sentence]
+        
     return df_sentiment
     
 
@@ -91,7 +109,7 @@ def sentiment_plot(df_sentiment, title, window):
         rolling_window = int(df_sentiment.shape[0] / 20)
         
     if window == 'chapter':
-        df_sentiment = label_chapters(df_sentiment) # add column with chapters
+        #df_sentiment = label_chapters(df_sentiment) # add column with chapters
         rolling_window = int(df_sentiment.shape[0] / df_sentiment['chapter'].max())
         
     df_sentiment["rolling_pos"] = df_sentiment["pos"].rolling(rolling_window).mean()
@@ -109,7 +127,8 @@ def sentiment_plot(df_sentiment, title, window):
         
     if window == 'chapter':
         
-        ax = sns.lineplot(x="chapter_frac", y="rolling_pos", hue="chapter",
+        df_sentiment = label_chapters(df_sentiment) # add column with chapters
+        ax = sns.lineplot(x="chapter_frac", y="rolling_pos_relative", hue="chapter",
                    units="chapter", estimator=None, lw=1,
                    data=df_sentiment, legend='brief')
         ax.set(xlabel='Fraction of Chapter', ylabel='Positive Fraction', title = title)
