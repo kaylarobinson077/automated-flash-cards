@@ -110,7 +110,9 @@ def sentiment_plot(df_sentiment, title, window):
         
     if window == 'chapter':
         #df_sentiment = label_chapters(df_sentiment) # add column with chapters
-        rolling_window = int(df_sentiment.shape[0] / df_sentiment['chapter'].max())
+        #rolling_window = int(df_sentiment.shape[0] / df_sentiment['chapter'].max())
+        rolling_window = int(df_sentiment.shape[0] / 20)
+        
         
     df_sentiment["rolling_pos"] = df_sentiment["pos"].rolling(rolling_window).mean()
     df_sentiment["rolling_neg"] = df_sentiment["neg"].rolling(rolling_window).mean()
