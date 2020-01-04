@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.animation as animation
 
 url_little_women        = 'http://www.gutenberg.org/files/514/514-h/514-h.htm'
 url_war_and_peace       = 'http://www.gutenberg.org/files/2600/2600-h/2600-h.htm'
@@ -25,8 +26,8 @@ def sentiment_main(url, title, window = False):
     df_sentiment = sentiment_analysis(tokenized_text)
     
     
-    ax = sentiment_plot(df_sentiment, title, window)
-    plt.show()
+    sentiment_movie(df_sentiment, title, window)
+
     
 def preprocess_text(url):
     res = requests.get(url)
@@ -56,22 +57,61 @@ def sentiment_analysis(tokenized_text):
     return df_sentiment
     
 
-def sentiment_plot(df_sentiment, title, window):
+def sentiment_movie(df_sentiment, title, window):
 
     rolling_window = int(df_sentiment.shape[0] / 20)                 
     df_sentiment["rolling_pos"] = df_sentiment["pos"].rolling(rolling_window).mean()
     df_sentiment["rolling_neg"] = df_sentiment["neg"].rolling(rolling_window).mean()
     
     c = np.linspace(0, 1, df_sentiment.shape[0])
-    
     cmap = sns.cubehelix_palette(8, dark=0.1, light=0.9, as_cmap=True)
     #ax = plt.plot(df_sentiment["rolling_pos"], df_sentiment["rolling_neg"], '-', color='blue', lw=0.8, label = 'Sentiment')
-    ax = sns.scatterplot(x = df_sentiment["rolling_pos"], y = df_sentiment["rolling_neg"], hue = c, palette = cmap, alpha = 0.5)
-    plt.legend(loc='upper right', labels=['Start', '1/3', '2/3', 'End'])
-    #plt.xlabel('Positivity')
-    #plt.ylabel('Negativity')
-    #plt.title(title)
-    #plt.legend()
+    ax = sns.scatterplot(x = df_sentiment["rolling_pos"], 
+                         y = df_sentiment["rolling_neg"], 
+                         hue = c, 
+                         palette = cmap, 
+                         alpha = 0.5,
+                         legend = False)
+    #plt.legend(loc='upper right', labels=['Start', '1/3', '2/3', 'End'])
+    plt.xlabel('Positivity')
+    plt.ylabel('Negativity')
+    plt.title(title)
+    
+    # can change these values later
+    #Writer = animation.writers['ffmpeg']
+    #writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)    
+#    Writer = animation.FFMpegWriter(fps=30, codec='libx264')  #or 
+    Writer = animation.FFMpegWriter(fps=20, metadata=dict(artist='Me'), bitrate=1800)
+    #Writer = animation.writers['ffmpeg']
+    #writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+    #print(np.nanmin(df_sentiment["rolling_pos"]))
+    
+    fig = plt.figure(figsize=(10,6))
+    #plt.xlim(np.nanmin(df_sentiment["rolling_pos"][0]), np.nanmax(df_sentiment["rolling_pos"][0]))
+    #plt.ylim(np.nanmin(df_sentiment["rolling_neg"][0]), np.nanmax(df_sentiment["rolling_neg"][0]))
+    plt.xlim(0, 0.5)
+    plt.ylim(0, 0.5)
+    
+    plt.xlabel('Positivity',fontsize=20)
+    plt.ylabel('Negativity',fontsize=20)
+    plt.title(title,fontsize=20)
+    
+    def animate(i):
+        data = df_sentiment.iloc[int(i-2):int(i+2)] #select data range
+        c = np.linspace(0, 1, df_sentiment.shape[0])
+        cmap = sns.cubehelix_palette(8, dark=0.1, light=0.9, as_cmap=True)
+        p = sns.scatterplot(x = data["rolling_pos"], 
+                             y = data["rolling_neg"], 
+                             hue = c, 
+                             palette = cmap, 
+                             alpha = 0.5,
+                             legend = False)
         
-    return ax
+    ani = animation.FuncAnimation(fig, animate, frames=20, repeat=True)
+    #ani.save('PeterPan.mp4', writer=writer)
+    #ani.save('PeterPan.mp4')
+    
+    return
+
+
 sentiment_main(url_peter_pan, "Peter Pan")
