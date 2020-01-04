@@ -17,7 +17,8 @@ url_les_mis             = 'http://www.gutenberg.org/files/135/135-h/135-h.htm'
 url_alice_in_wonderland = 'http://www.gutenberg.org/files/11/11-h/11-h.htm'
 url_tom_sawyer          = 'http://www.gutenberg.org/files/74/74-h/74-h.htm'
 url_peter_pan           = 'http://www.gutenberg.org/files/16/16-h/16-h.htm'
-
+url_moby_dick           = 'http://www.gutenberg.org/files/2701/2701-h/2701-h.htm' 
+url_don_quixote         = 'http://www.gutenberg.org/files/996/996-h/996-h.htm'
 
 def sentiment_main(url, title, window = False):
     
@@ -144,17 +145,19 @@ def sentiment_plot(df_sentiment, title, window):
 # let's run it!
     
 # basic plots
-sentiment_main(url_little_women, "Little Women")
-sentiment_main(url_war_and_peace, "War and Peace")
-sentiment_main(url_bible, "The Bible")
-sentiment_main(url_wizard_of_oz, "The Wizard of Oz") # chapters no clear delineator - revisit?
-sentiment_main(url_les_mis, "Les Miserables")
-sentiment_main(url_alice_in_wonderland, "Alice in Wonderland")
-sentiment_main(url_tom_sawyer, "Tom Sawyer")
-sentiment_main(url_peter_pan, "Peter Pan")
+#sentiment_main(url_little_women, "Little Women")
+#sentiment_main(url_war_and_peace, "War and Peace")
+#sentiment_main(url_bible, "The Bible")
+#sentiment_main(url_wizard_of_oz, "The Wizard of Oz") # chapters no clear delineator - revisit?
+#sentiment_main(url_les_mis, "Les Miserables")
+#sentiment_main(url_alice_in_wonderland, "Alice in Wonderland")
+#sentiment_main(url_tom_sawyer, "Tom Sawyer")
+#sentiment_main(url_peter_pan, "Peter Pan")
 
 # plot per chapter
 
 sentiment_main(url_tom_sawyer, "Tom Sawyer", window = 'chapter')
 sentiment_main(url_alice_in_wonderland, "Alice in Wonderland", window = 'chapter')
 sentiment_main(url_peter_pan, "Peter Pan", window = 'chapter')
+sentiment_main(url_moby_dick, "Moby Dick", window = 'chapter')
+sentiment_main(url_don_quixote, "Don Quixote", window = 'chapter')
